@@ -6,3 +6,5 @@ ssh_thread.py - ssh命令demo<br>
 process.py - python线程池demo<br>
 pssqldemo.py - postgresql连接demo（待完善）<br>
 NoSql.py - python 写nosql db demo<br>
+2048.py - python 2048 demo<br>
+AISnake.py - ai 贪吃蛇代码<br>
