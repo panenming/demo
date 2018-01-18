@@ -10,3 +10,4 @@ NoSql.py - python 写nosql db demo<br>
 AISnake.py - ai 贪吃蛇代码(待办)<br>
 DouBanMovies - 豆瓣电影爬取，分析，和推荐<br>
 deletesamedirs.py - 比对两个文件夹中相同的文件或者文件夹，删除其中一个文件夹中的相同项<br>
+renamefileindirs.py - 根据一定的正则表达式规则修改文件名称<br>
