@@ -11,3 +11,5 @@ AISnake.py - ai 贪吃蛇代码(待办)<br>
 DouBanMovies - 豆瓣电影爬取，分析，和推荐<br>
 deletesamedirs.py - 比对两个文件夹中相同的文件或者文件夹，删除其中一个文件夹中的相同项<br>
 renamefileindirs.py - 根据一定的正则表达式规则修改文件名称<br>
+tokatong.py - 将头像转化为卡通图片<br>
+IsMyFace - 识别自己人脸的程序<br>
