@@ -6,6 +6,7 @@ import os
 import random
 import sys
 from sklearn.model_selection import train_test_split
+import win32api,win32con
 
 #使用摄像头采集人脸数据，使用./model中的模型检测是否为特定的人脸
 
@@ -160,10 +161,13 @@ while True:
         face = img[x1:y1, x2:y2]
         # 调整图片的尺寸
         face = cv2.resize(face, (size, size))
-        print('是我的脸吗? %s' % is_my_face(face))
-
-        cv2.rectangle(img, (x2, x1), (y2, y1), (255, 0, 0), 3)
-        cv2.imshow('image', img)
+        #print('是我的脸吗? %s' % is_my_face(face))
+        if is_my_face(face):
+            cv2.rectangle(img, (x2, x1), (y2, y1), (255, 0, 0), 3)
+            cv2.imshow('image', img)
+        else:
+            cv2.imshow('image', img)
+            win32api.MessageBox(0, "这个不是你吧？", "确认", win32con.MB_OK)
         key = cv2.waitKey(30) & 0xff
         if key == 27:
             sys.exit(0)
