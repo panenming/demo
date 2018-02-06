@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>GAME</title>
+<style type="text/css">
+	body,div{
+		margin:0;
+		padding:0;
+		border:0;
+	}
+	#main{
+		margin:auto;
+		width:100%;
+		height:100%;
+		position:relative;
+	}
+</style>
+</head>
+
+<body>
+	<div id="main">
+		<canvas width="360" height="500" id="myCanvas">你的浏览器不支持html5的canvas</canvas>
+    </div>
+</body>
+<script>
+	function $(str)
+	{
+		return document.getElementById(str);
+	}
+	
+	var myCanvas = $("myCanvas");
+	var myImg = new Image();
+	myImg.src = 'resource/1.png';
+	var arrowImgDefault = new Image();
+	arrowImgDefault.src = 'resource/2.png';
+	var arrowImgActive = new Image();
+	arrowImgActive.src = 'resource/3.png';
+	var ctx = myCanvas.getContext('2d');
+	
+	myImg.onload = function() {
+		ctx.drawImage(myImg, 0, 0, 360, 500);
+	}
+	
+	//websocket创建
+	var websocketBusyFlag = 0;
+	var WS = null;
+	if(window.WebSocket)
+	{
+		WS = new WebSocket('ws://10.2.110.101:9001/websocket');	//注意：更改ip地址和端口号，要和python代码一致
+	}
+	else
+	{
+		alert("你的浏览器不支持websocket");
+	}
+	WS.onopen = function() {
+		WS.send('hello websocket!');
+	}
+	WS.onmessage = function(e) {
+		var message = e.data;
+		if(message == 'reset') websocketBusyFlag = 0;
+		else alert(message);
+	}	
+	
+	/**********************操作事件<开始>***************************/
+	//装子弹按键中心坐标：(x=65,y=115),有效半径：r=55
+	//射击按键中心坐标：(x=65,y=385),有效半径：r=55
+	var ReX = 65, ReY = 115, ReR = 55;
+	var SeX = 65, SeY = 385, SeR = 55;
+	myCanvas.ontouchstart = function(e) {
+		var x = e.touches[0].clientX;
+		var y = e.touches[0].clientY;
+		//装子弹
+		if(Math.sqrt((x - ReX)*(x - ReX) + (y - ReY)*(y - ReY)) <= ReR)
+		{
+			WS.send('reload');
+		}
+		//射击开始
+		if(Math.sqrt((x - SeX)*(x - SeX) + (y - SeY)*(y - SeY)) <= SeR)
+		{
+			WS.send('shoot_start');
+		}
+		event.preventDefault();
+	}
+	myCanvas.ontouchmove = function(e){
+		event.preventDefault();
+	}
+	myCanvas.ontouchend = function(e) {
+		WS.send('shoot_end');
+		event.preventDefault();	
+	}
+	myCanvas.ontouchcancel = function(e) {
+		WS.send('shoot_end');
+		event.preventDefault();
+	}
+	
+	var last_x = 0;
+	var last_y = 0;
+	if(!window.DeviceMotionEvent) 
+	{
+		alert('你的浏览器不支持手机重力传感');
+	}
+	else
+	{
+		//方向获取
+		window.ondevicemotion = function(e) {
+			if(websocketBusyFlag) return;
+			
+			var x = e.accelerationIncludingGravity.x;
+			var y = e.accelerationIncludingGravity.y;
+			
+			var direction = null;
+			if(x > 7.5 && x > last_x)
+			{
+				direction = 'backward';	//减速
+				last_x = x;
+			}
+			else if(x < -1.0 && x < last_x)
+			{
+				direction = 'forward';	//加速
+				last_x = x;
+			}
+			else last_x = 0;
+			
+			if(y < -3 && y < last_y)
+			{
+				direction = 'leftward';	//向左
+				last_y = y;
+			}
+			else if(y > 3 && y > last_y)
+			{
+				direction = 'rightward';	//向右
+				last_y = y;
+			}
+			else last_y = 0;
+			
+			directionImgInit();
+			
+			if(direction)
+			{
+				websocketBusyFlag = 1;
+				WS.send(direction);							
+				
+				//绘制被选中的方向键图标
+				switch(direction)
+				{
+					case 'leftward':
+						ctx.save();
+						ctx.translate(203, 118);
+						ctx.rotate(0);
+						ctx.drawImage(arrowImgActive, 0, 0);
+						ctx.restore();					
+						break;
+					case 'rightward':
+						ctx.save();
+						ctx.translate(227, 379);
+						ctx.rotate(Math.PI);
+						ctx.drawImage(arrowImgActive, 0, 0);
+						ctx.restore();					
+						break;
+					case 'forward':
+						ctx.save();
+						ctx.translate(315, 236);
+						ctx.rotate(Math.PI/2);
+						ctx.drawImage(arrowImgActive, 0, 0);
+						ctx.restore();					
+						break;
+					case 'backward':
+						ctx.save();
+						ctx.translate(190, 259);
+						ctx.rotate(-Math.PI/2);
+						ctx.drawImage(arrowImgActive, 0, 0);
+						ctx.restore();					
+						break;
+				}
+			}
+		}
+	}
+	
+	//初始化方向键图标
+	function directionImgInit()
+	{
+		ctx.save();
+		ctx.translate(203, 118);
+		ctx.rotate(0);
+		ctx.drawImage(arrowImgDefault, 0, 0);
+		ctx.restore();
+		ctx.save();
+		ctx.translate(315, 236);
+		ctx.rotate(Math.PI/2);
+		ctx.drawImage(arrowImgDefault, 0, 0);
+		ctx.restore();	
+		ctx.save();
+		ctx.translate(227, 379);
+		ctx.rotate(Math.PI);
+		ctx.drawImage(arrowImgDefault, 0, 0);
+		ctx.restore();
+		ctx.save();
+		ctx.translate(190, 259);
+		ctx.rotate(-Math.PI/2);
+		ctx.drawImage(arrowImgDefault, 0, 0);
+		ctx.restore();	
+	}
+	/********************操作事件<结束>***************************/
+</script>
+</html>
