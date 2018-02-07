@@ -52,23 +52,23 @@ def ocr_img(image):
     image = binarizing(image, 190)
 
     img=depoint(image)
-    #img.show()
+    img.show()
 
-    result = pytesseract.image_to_string(image, config=tessdata_dir_config)
+    result = pytesseract.image_to_string(img, config=tessdata_dir_config)
     return result
 
-
+fig = plt.figure()
+img = Image.open('captcha.jpg')
+im = plt.imshow(img, animated=True)
 
 def updatefig(s):
     im.set_array(Image.open('captcha.jpg'))
     return im
 if __name__ == '__main__':
-    # img = Image.open("./captcha.jpg")
-    # print(ocr_img(img))
+    img = Image.open("captcha.jpg")
+    print("code = ",ocr_img(img))
 
-    ani = animation.FuncAnimation(fig, updatefig, interval=5, blit=True)
-    plt.show()
+    # ani = animation.FuncAnimation(fig, updatefig, interval=5, blit=True)
+    # plt.show()
 
-    # fig = plt.figure()
-    # img = Image.open('captcha.jpg')
-    # im = plt.imshow(img, animated=True)
+    # 
