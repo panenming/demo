@@ -121,17 +121,53 @@ def clearNoise(image,G,N,Z):
                 if color != None:  
                     draw.point((x,y),color)
 
+
+# 去除干扰线算法
+def depoint(img):   #input: gray image
+    pixdata = img.load()
+    w,h = img.size
+    for y in range(1,h-1):
+        for x in range(1,w-1):
+            count = 0
+            if pixdata[x,y-1] > 245:
+                count = count + 1
+            if pixdata[x,y+1] > 245:
+                count = count + 1
+            if pixdata[x-1,y] > 245:
+                count = count + 1
+            if pixdata[x+1,y] > 245:
+                count = count + 1
+            if count > 2:
+                pixdata[x,y] = 255
+    return img
+
+# 二值化算法
+def binarizing(img,threshold):
+    pixdata = img.load()
+    w, h = img.size
+    for y in range(h):
+        for x in range(w):
+            if pixdata[x, y] < threshold:
+                pixdata[x, y] = 0
+            else:
+                pixdata[x, y] = 255
+    return img
+
+def imgConvert(image):
+    # 转化为灰度图
+    image = image.convert('L')
+    # 把图片变成二值图像
+    image = binarizing(image, 190)
+
+    img=depoint(image)
+    return img
   
 
 if __name__ == "__main__":
-    img = cv2.imread('pet-chain/captcha/mP58.jpg')
-    kernel = np.ones((5,5),np.float32)/25
-    dst = cv2.filter2D(img,-1,kernel)
-    plt.subplot(121),plt.imshow(img),plt.title('Original')
-    plt.xticks([]), plt.yticks([])
-    plt.subplot(122),plt.imshow(dst),plt.title('Averaging')
-    plt.xticks([]), plt.yticks([])
-    plt.show()
+    img = Image.open('pet-chain/captcha/2cw8.jpg')
+    dst = imgConvert(img)
+    #img.show()
+    dst.save()
     # #降噪处理图片
     # pc = Pic()
     # #打开图片  
