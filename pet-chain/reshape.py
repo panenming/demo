@@ -22,7 +22,7 @@ def compressImage(srcPath,dstPath):
             sImg=Image.open(srcFile)  
             w,h=sImg.size  
             print(w,h)
-            dImg=sImg.resize((100,30),Image.ANTIALIAS)  #设置压缩尺寸和选项，注意尺寸要用括号
+            dImg=sImg.resize((63,23),Image.ANTIALIAS)  #设置压缩尺寸和选项，注意尺寸要用括号
             dImg.save(dstFile) #也可以用srcFile原路径保存,或者更改后缀保存，save这个函数后面可以加压缩编码选项JPEG之类的
             print(dstFile+" compressed succeeded")
 

@@ -2,6 +2,7 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 import numpy as np
 import os,random,cv2
+import time
 
 class Train():
 	def __init__(self):
@@ -15,8 +16,8 @@ class Train():
 		# 写到指定的磁盘路径中 
 		self.log_dir = 'pet-chain/log'
 		# 数据集图片大小
-		self.width = 30
-		self.heigth = 100
+		self.width = 23
+		self.heigth = 63
 		# 最大迭代次数
 		self.max_steps = 1000000
 		# 读取数据集
@@ -83,10 +84,14 @@ class Train():
 			test_labels:训练集标签
 		"""
 		# 读取图片
-		imgs = os.listdir(self.data_path)
+		imags = os.listdir(self.data_path)
 		# 打乱图片顺序
-		random.shuffle(imgs)
- 
+		random.shuffle(imags)
+		imgs = []
+		# 删除不合法的数据
+		for i in range(len(imags)):
+			if len(imags[i]) == 8:
+				imgs.append(imags[i])
 		# 数据集总共个数
 		imgs_num = len(imgs)
 		# 按照比例求出测试集个数
@@ -224,7 +229,7 @@ class Train():
 		"""
 		# 卷积的input: 一个Tensor。数据维度是四维[batch, in_height, in_width, in_channels]
 		# 具体含义是[batch大小, 图像高度, 图像宽度, 图像通道数]
-		# 因为是灰度图，所以是单通道的[?, 100, 30, 1]
+		# 因为是灰度图，所以是单通道的[?, 250, 90, 1]
 		x = tf.reshape(self.X, shape=[-1, self.heigth, self.width, 1])
 		# 卷积的filter:一个Tensor。数据维度是四维[filter_height, filter_width, in_channels, out_channels]
 		# 具体含义是[卷积核的高度, 卷积核的宽度, 图像通道数, 卷积核个数]
@@ -236,7 +241,7 @@ class Train():
 		#	padding：一个字符串，取值为 SAME 或者 VALID 前者使得卷积后图像尺寸不变, 后者尺寸变化
 		# conv2d卷积层输出:
 		# 	一个四维的Tensor, 数据维度为 [batch, out_width, out_height, in_channels * out_channels]
-		#	[?, 100, 30, 32]
+		#	[?, 250, 90, 32]
 		#   输出计算公式H0 = (H - F + 2 * P) / S + 1
 		#		对于本卷积层而言,因为padding为SAME,所以P为1。
 		#	其中H为图像高度,F为卷积核高度,P为边填充,S为步长
@@ -255,7 +260,7 @@ class Train():
 		#	padding:和卷积类似，可以取'VALID' 或者'SAME'
 		# max_pool池化层输出：
 		#	返回一个Tensor，类型不变，shape仍然是[batch, out_width, out_height, in_channels]这种形式
-		# 	[?, 50, 15, 32]
+		# 	[?, 125, 45, 32]
 		# 学习参数:
 		#	2*32
 		# 连接个数:
@@ -265,22 +270,22 @@ class Train():
 		# conv1 = tf.nn.dropout(conv1, self.keep_prob)
 		w_c2 = tf.Variable(w_alpha*tf.random_normal([3, 3, 32, 64]))
 		b_c2 = tf.Variable(b_alpha*tf.random_normal([64]))
-		# [?, 50, 15, 64]
+		# [?, 125, 45, 64]
 		conv2 = tf.nn.relu(tf.nn.bias_add(tf.nn.conv2d(conv1, w_c2, strides=[1, 1, 1, 1], padding='SAME'), b_c2))
-		# [?, 25, 8, 64]
+		# [?, 63, 23, 64]
 		conv2 = tf.nn.max_pool(conv2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 		#conv2 = tf.nn.dropout(conv2, self.keep_prob)
 		w_c3 = tf.Variable(w_alpha*tf.random_normal([3, 3, 64, 64]))
 		b_c3 = tf.Variable(b_alpha*tf.random_normal([64]))
-		# [?, 25, 8, 64]
+		# [?, 63, 23, 64]
 		conv3 = tf.nn.relu(tf.nn.bias_add(tf.nn.conv2d(conv2, w_c3, strides=[1, 1, 1, 1], padding='SAME'), b_c3))
-		# [?, 13, 4, 64]
+		# [?, 23, 12, 64]
 		conv3 = tf.nn.max_pool(conv3, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 		#conv3 = tf.nn.dropout(conv3, self.keep_prob)
-		# [3328, 1024]
-		w_d = tf.Variable(w_alpha*tf.random_normal([4*13*64, 1024]))
+		# [6144, 1024]
+		w_d = tf.Variable(w_alpha*tf.random_normal([8*3*64, 1024]))
 		b_d = tf.Variable(b_alpha*tf.random_normal([1024]))
-		# [?, 3328]
+		# [?, 12*23*64]
 		dense = tf.reshape(conv3, [-1, w_d.get_shape().as_list()[0]])
 		# [?, 1024]
 		dense = tf.nn.relu(tf.add(tf.matmul(dense, w_d), b_d))
@@ -307,7 +312,7 @@ class Train():
 		tf.summary.scalar('loss', loss)
 		
 		# 使用AdamOptimizer优化器训练模型，最小化交叉熵损失
-		optimizer = tf.train.AdamOptimizer(learning_rate=0.001).minimize(loss)
+		optimizer = tf.train.AdamOptimizer(learning_rate=0.0005).minimize(loss)
  
 		# 计算准确率
 		y = tf.reshape(output, [-1, self.max_captcha, self.char_set_len])
@@ -335,7 +340,7 @@ class Train():
 					self.test_imgs, self.test_labels, self.train_imgs, self.train_labels = self.get_imgs()
 				# 每10次，使用测试集，测试一下准确率
 				if i % 10 == 0:
-					batch_x_test, batch_y_test = self.get_next_batch(False, 200)
+					batch_x_test, batch_y_test = self.get_next_batch(False, 100)
 					summary, acc = sess.run([merged, accuracy], feed_dict={self.X: batch_x_test, self.Y: batch_y_test, self.keep_prob: 1})
 					print('迭代第%d次 accuracy:%f' % (i+1, acc))
 					test_writer.add_summary(summary, i)
@@ -348,7 +353,7 @@ class Train():
 						break
 				# 一直训练
 				else:
-					batch_x, batch_y = self.get_next_batch(True, 200)
+					batch_x, batch_y = self.get_next_batch(True, 100)
 					loss_value, _ = sess.run([loss, optimizer], feed_dict={self.X: batch_x, self.Y: batch_y, self.keep_prob: 1})
 					print('迭代第%d次 loss:%f' % (i+1, loss_value))
 					curve = sess.run(merged, feed_dict={self.X: batch_x_test, self.Y: batch_y_test, self.keep_prob: 1})
@@ -367,3 +372,11 @@ class Train():
 if __name__ == '__main__':
 	train = Train()
 	train.train_crack_captcha_cnn()
+	# train.test_show_img("pet-chain/captcha/BmCc.jpg")
+	# img = cv2.imread("pet-chain/captcha/BmCc.jpg")
+	# img = cv2.imread("E:\\index.php.png")
+	# print(img.shape)
+	# timeStamp = 	   1518138409
+	# timeArray = time.localtime(timeStamp)
+	# otherStyleTime = time.strftime("%Y-%m-%d %H:%M:%S", timeArray)
+	# print(otherStyleTime)

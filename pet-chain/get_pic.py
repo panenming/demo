@@ -164,10 +164,11 @@ def imgConvert(image):
   
 
 if __name__ == "__main__":
-    img = Image.open('pet-chain/captcha/2cw8.jpg')
-    dst = imgConvert(img)
-    #img.show()
-    dst.save()
+    for file in os.listdir('pet-chain/captcha'):    
+        img = Image.open('pet-chain/captcha/' + file)
+        dst = imgConvert(img)
+        #img.show()
+        dst.save('pet-chain/captcha/' + file)
     # #降噪处理图片
     # pc = Pic()
     # #打开图片  
