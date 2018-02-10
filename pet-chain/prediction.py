@@ -1,6 +1,6 @@
 import tensorflow as tf
 import numpy as np
-import train0
+import train1
 
 def crack_captcha(captcha_image, captcha_label):
 	"""
@@ -30,6 +30,6 @@ def crack_captcha(captcha_image, captcha_label):
 			print("正确: {}  预测: {}".format(dz.vec2text(label), prediction_text))
 
 if __name__ == '__main__':
-	dz = train0.Train()
+	dz = train1.Train()
 	batch_x, batch_y = dz.get_next_batch(False, 5)
 	crack_captcha(batch_x,batch_y)

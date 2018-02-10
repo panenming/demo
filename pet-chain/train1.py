@@ -335,7 +335,7 @@ class Train():
 			# 遍历self.max_steps次
 			for i in range(self.max_steps):
 				# 迭代500次，打乱一下数据集
-				if i % 199 == 0:
+				if i % 299 == 0:
 					saver.save(sess, "pet-chain/model/captcha.model", global_step=i)
 					self.test_imgs, self.test_labels, self.train_imgs, self.train_labels = self.get_imgs()
 				# 每10次，使用测试集，测试一下准确率

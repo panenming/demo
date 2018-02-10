@@ -10,6 +10,10 @@ from PIL import Image,ImageDraw
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
+import reshape
+import autoCheckCaptcha
+import train1
+import tensorflow as tf
 
 
 class Pic():
@@ -64,7 +68,7 @@ class Pic():
         if jPage.get(u"errorMsg") == "success":
             self.seed = jPage.get(u"data").get(u"seed")
             img = jPage.get(u"data").get(u"img")
-            with open('pet-chain/captcha/%s.jpg' % self.seed, 'wb') as f:
+            with open('pet-chain/captcha.jpg', 'wb') as f:
                 f.write(base64.b64decode(img))
             return True
         else:
@@ -164,11 +168,24 @@ def imgConvert(image):
   
 
 if __name__ == "__main__":
-    for file in os.listdir('pet-chain/captcha'):    
-        img = Image.open('pet-chain/captcha/' + file)
-        dst = imgConvert(img)
-        #img.show()
-        dst.save('pet-chain/captcha/' + file)
+    dz = train1.Train()
+    pic = Pic()
+    pic.genCaptcha()
+    reshape.compress('pet-chain/captcha.jpg','pet-chain/captcha.jpg')
+    # img = Image.open("pet-chain/captcha.jpg")
+    # img.show()
+    output = dz.crack_captcha_cnn()
+    saver = tf.train.Saver()
+    sess =  tf.Session()
+    saver.restore(sess, tf.train.latest_checkpoint('pet-chain/model/'))
+    autoCheckCaptcha.autoCheck('pet-chain/captcha.jpg',dz,sess,output)
+    #autoCheckCaptcha.autoCheck('pet-chain/back/2SF4.jpg',dz)
+
+    # for file in os.listdir('pet-chain/captcha'):    
+    #     img = Image.open('pet-chain/captcha/' + file)
+    #     dst = imgConvert(img)
+    #     #img.show()
+    #     dst.save('pet-chain/captcha/' + file)
     # #降噪处理图片
     # pc = Pic()
     # #打开图片  

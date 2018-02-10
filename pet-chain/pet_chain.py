@@ -7,6 +7,10 @@ import traceback
 import base64
 from PIL import Image
 import ocr
+import reshape
+import tensorflow as tf
+import train1
+import autoCheckCaptcha
 
 
 class PetChain():
@@ -31,6 +35,13 @@ class PetChain():
         self.get_config()
 
     def get_config(self):
+        # 初始化tensorflow
+        self.dz = train1.Train()
+        self.output = self.dz.crack_captcha_cnn()
+        saver = tf.train.Saver()
+        self.sess =  tf.Session()
+        saver.restore(self.sess, tf.train.latest_checkpoint('pet-chain/model/'))
+
         config = configparser.ConfigParser()
         config.read("pet-chain/config/config.ini")
         self.isAuto = config.getboolean("Pet-Chain", "isAuto")
@@ -85,9 +96,9 @@ class PetChain():
 
             if float(pet_amount) <= setting:
                 if self.genCaptcha(): # 生成验证码
-                    img = Image.open("./captcha.jpg")
+                    img = Image.open("pet-chain/captcha.jpg")
                     if self.isAuto:
-                        self.captcha = ocr.ocr_img(img)
+                        self.captcha = autoCheckCaptcha.autoCheck('pet-chain/captcha.jpg',self.dz,self.sess,self.output)
                     else:
                         self.captcha = input('请输入验证码：')
 
@@ -119,8 +130,9 @@ class PetChain():
         if jPage.get(u"errorMsg") == "success":
             self.seed = jPage.get(u"data").get(u"seed")
             img = jPage.get(u"data").get(u"img")
-            with open('captcha.jpg', 'wb') as f:
+            with open('pet-chain/captcha.jpg', 'wb') as f:
                 f.write(base64.b64decode(img))
+            reshape.compress('pet-chain/captcha.jpg','pet-chain/captcha.jpg')
             return True
         else:
             print('获取验证码失败！')
