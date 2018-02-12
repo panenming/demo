@@ -183,16 +183,14 @@ def splitimage(name, fixlen,srcpath,dstpath):
 
 def splitimageOrder(fixlen,dstpath):
     print('开始处理图片切割, 请稍候...')
-    img = cv2.imread('pet-chain/captcha.jpg')
-    imgOrder = []
+    img = Image.open('pet-chain/captcha.jpg')
     for i in range(4):
-        #dstname = str(i) + '.jpg'
-        #box = (fixlen[i][0], 0, fixlen[i][1], 23)
-        # img.crop(box).save(dstpath + dstname)
+        dstname = str(i) + '.jpg'
+        box = (fixlen[i][0], 0, fixlen[i][1], 23)
+        img.crop(box).save(dstpath + dstname)
         # cv2.imshow("img" + str(i),img[fixlen[i][0]:fixlen[i][1],0:23])
-        imgOrder.append(img[0:23,fixlen[i][0]:fixlen[i][1]])
-        cv2.imwrite('pet-chain/divide/' + str(i) + '.jpg',img[0:23,fixlen[i][0]:fixlen[i][1]])
-    return imgOrder
+        # imgOrder.append(img[0:23,fixlen[i][0]:fixlen[i][1]])
+        # cv2.imwrite('pet-chain/divide/' + str(i) + '.jpg',img[0:23,fixlen[i][0]:fixlen[i][1]])
 
   
 
@@ -216,11 +214,11 @@ if __name__ == "__main__":
     start = time.time()
     img = Image.open("pet-chain/captcha.jpg")
     imgConvert(img)
-    imgs = splitimageOrder(fixlen,'pet-chain/divide/')
+    splitimageOrder(fixlen,'pet-chain/divide/')
     # img.show()
     txt = ''
-    for i in range(len(imgs)):
-        txt += autoCheckCaptcha.autoCheck(imgs[i],dz,sess,output)
+    for i in range(4):
+        txt += autoCheckCaptcha.autoCheck("pet-chain/divide/" + str(i) + ".jpg",dz,sess,output)
     end = time.time()
     print('code = ',txt)
     print("cost : ", end -start)

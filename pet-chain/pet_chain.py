@@ -98,14 +98,16 @@ class PetChain():
 
             if float(pet_amount) <= setting:
                 if self.genCaptcha(): # 生成验证码
+                    self.captcha = ''
                     img = Image.open("pet-chain/captcha.jpg")
                     get_pic.imgConvert(img)
-                    imgs = get_pic.splitimageOrder(self.fixlen,'pet-chain/divide/')
+                    get_pic.splitimageOrder(self.fixlen,'pet-chain/divide/')
                     if self.isAuto:
-                        for i in range(len(imgs)):
-                            self.captcha += autoCheckCaptcha.autoCheck(imgs[i],self.dz,self.sess,self.output)
+                        for i in range(4):
+                            self.captcha += autoCheckCaptcha.autoCheck("pet-chain/divide/" + str(i) + ".jpg",self.dz,self.sess,self.output)
                     else:
                         self.captcha = input('请输入验证码：')
+                    print("验证码猜测：",self.captcha)
 
                     pet_id = pet.get(u"petId")
                     pet_validcode = pet.get(u"validCode")
@@ -137,7 +139,7 @@ class PetChain():
             img = jPage.get(u"data").get(u"img")
             with open('pet-chain/captcha.jpg', 'wb') as f:
                 f.write(base64.b64decode(img))
-            reshape.compress('pet-chain/captcha.jpg','pet-chain/captcha.jpg')
+            #reshape.compress('pet-chain/captcha.jpg','pet-chain/captcha.jpg')
             return True
         else:
             print('获取验证码失败！')

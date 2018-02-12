@@ -24,9 +24,9 @@ def crack_captcha(output,sess,captcha_image,dz):
 	# print("预测: ",prediction_text)
 	return prediction_text
 
-def autoCheck(img,dz,sess,output):
+def autoCheck(name,dz,sess,output):
 	# start = time.time()
-	img = np.mean(img, -1)
+	img = np.mean(cv2.imread(name), -1)
 	txt = crack_captcha(output,sess,img.flatten() / 255,dz)
 	# end = time.time()
 	# print("用时：", end-start)
