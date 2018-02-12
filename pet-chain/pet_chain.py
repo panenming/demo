@@ -82,11 +82,14 @@ class PetChain():
             print(errorMsg + '================================================')
             if errorMsg == u"success":
                 pets = page.json().get(u"data").get("petsOnSale")
-                pool = threadpool.ThreadPool(10)
-                req = threadpool.makeRequests(self.purchase, pets)
-                for queue in req:
-                    pool.putRequest(queue)
-                pool.wait()
+                # 修改为同步逻辑，验证码会冲突。
+                # pool = threadpool.ThreadPool(1)
+                # req = threadpool.makeRequests(self.purchase, pets)
+                for i in range(len(pets)):
+                    self.purchase(pets[i])
+                # for queue in req:
+                #     pool.putRequest(queue)
+                # pool.wait()
         except Exception as e:
             print(e)
 
