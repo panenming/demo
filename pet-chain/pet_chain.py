@@ -9,8 +9,9 @@ from PIL import Image
 import ocr
 import reshape
 import tensorflow as tf
-import train1
+import train2
 import autoCheckCaptcha
+import get_pic
 
 
 class PetChain():
@@ -30,13 +31,14 @@ class PetChain():
         self.username = ''
         self.password = ''
         self.captcha = ''
+        self.fixlen = [[14,24],[24,34],[34,44],[47,57]]
         self.headers = {}
         self.get_headers()
         self.get_config()
 
     def get_config(self):
         # 初始化tensorflow
-        self.dz = train1.Train()
+        self.dz = train2.Train()
         self.output = self.dz.crack_captcha_cnn()
         saver = tf.train.Saver()
         self.sess =  tf.Session()
@@ -97,8 +99,11 @@ class PetChain():
             if float(pet_amount) <= setting:
                 if self.genCaptcha(): # 生成验证码
                     img = Image.open("pet-chain/captcha.jpg")
+                    get_pic.imgConvert(img)
+                    imgs = get_pic.splitimageOrder(self.fixlen,'pet-chain/divide/')
                     if self.isAuto:
-                        self.captcha = autoCheckCaptcha.autoCheck('pet-chain/captcha.jpg',self.dz,self.sess,self.output)
+                        for i in range(len(imgs)):
+                            self.captcha += autoCheckCaptcha.autoCheck(imgs[i],self.dz,self.sess,self.output)
                     else:
                         self.captcha = input('请输入验证码：')
 

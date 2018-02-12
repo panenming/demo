@@ -21,15 +21,15 @@ def crack_captcha(output,sess,captcha_image,dz):
 		vector[i*dz.char_set_len + n] = 1
 		i += 1
 	prediction_text = dz.vec2text(vector)
-	print("预测: ",prediction_text)
+	# print("预测: ",prediction_text)
 	return prediction_text
 
-def autoCheck(path,dz,sess,output):
-	start = time.time()
-	img = np.mean(cv2.imread(path), -1)
+def autoCheck(img,dz,sess,output):
+	# start = time.time()
+	img = np.mean(img, -1)
 	txt = crack_captcha(output,sess,img.flatten() / 255,dz)
-	end = time.time()
-	print("用时：", end-start)
+	# end = time.time()
+	# print("用时：", end-start)
 	return txt
 
 if __name__ == '__main__':

@@ -5,15 +5,18 @@ import json
 import configparser
 import os
 import base64
-from PIL import Image,ImageDraw
+from PIL import Image,ImageDraw,ImageFile
 
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 import reshape
 import autoCheckCaptcha
-import train1
+import train2
 import tensorflow as tf
+import time
+
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
 class Pic():
@@ -164,21 +167,63 @@ def imgConvert(image):
     image = binarizing(image, 190)
 
     img=depoint(image)
+    img=img.resize((63,23),Image.ANTIALIAS)
+    img.save('pet-chain/captcha.jpg')
     return img
+
+# 将back中的图片按照比例每个切成四个 14-24 24-34 37-47 47-57 切分为四个字符图片
+def splitimage(name, fixlen,srcpath,dstpath):
+    img = Image.open(srcpath + name)
+    print('开始处理图片切割, 请稍候...')
+    basename = name.split('.')[0]
+    for i in range(len(basename)):
+        dstname = basename + "_" + basename[i] + '.jpg'
+        box = (fixlen[i][0], 0, fixlen[i][1], 23)
+        img.crop(box).save(dstpath + dstname)
+
+def splitimageOrder(fixlen,dstpath):
+    print('开始处理图片切割, 请稍候...')
+    img = cv2.imread('pet-chain/captcha.jpg')
+    imgOrder = []
+    for i in range(4):
+        #dstname = str(i) + '.jpg'
+        #box = (fixlen[i][0], 0, fixlen[i][1], 23)
+        # img.crop(box).save(dstpath + dstname)
+        # cv2.imshow("img" + str(i),img[fixlen[i][0]:fixlen[i][1],0:23])
+        imgOrder.append(img[0:23,fixlen[i][0]:fixlen[i][1]])
+        cv2.imwrite('pet-chain/divide/' + str(i) + '.jpg',img[0:23,fixlen[i][0]:fixlen[i][1]])
+    return imgOrder
+
   
 
 if __name__ == "__main__":
-    dz = train1.Train()
-    pic = Pic()
-    pic.genCaptcha()
-    reshape.compress('pet-chain/captcha.jpg','pet-chain/captcha.jpg')
-    # img = Image.open("pet-chain/captcha.jpg")
-    # img.show()
+    # 将back中的图片按照比例每个切成四个 14-24 24-34 37-47 47-57 切分为四个字符图片
+    fixlen = [[14,24],[24,34],[34,44],[47,57]]
+    # for file in os.listdir('pet-chain/back'):
+    #     if len(file) == 8:
+    #         splitimage(file,fixlen,'pet-chain/back/','pet-chain/split/')
+    #     else:
+    #         print("file 不合法：" + file)
+
+    dz = train2.Train()
     output = dz.crack_captcha_cnn()
     saver = tf.train.Saver()
     sess =  tf.Session()
-    saver.restore(sess, tf.train.latest_checkpoint('pet-chain/model/'))
-    autoCheckCaptcha.autoCheck('pet-chain/captcha.jpg',dz,sess,output)
+    saver.restore(sess,tf.train.latest_checkpoint('pet-chain/model'))
+    pic = Pic()
+    pic.genCaptcha()
+
+    start = time.time()
+    img = Image.open("pet-chain/captcha.jpg")
+    imgConvert(img)
+    imgs = splitimageOrder(fixlen,'pet-chain/divide/')
+    # img.show()
+    txt = ''
+    for i in range(len(imgs)):
+        txt += autoCheckCaptcha.autoCheck(imgs[i],dz,sess,output)
+    end = time.time()
+    print('code = ',txt)
+    print("cost : ", end -start)
     #autoCheckCaptcha.autoCheck('pet-chain/back/2SF4.jpg',dz)
 
     # for file in os.listdir('pet-chain/captcha'):    

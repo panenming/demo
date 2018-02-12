@@ -52,7 +52,17 @@ def ocr_img(image):
     image = binarizing(image, 190)
 
     img=depoint(image)
-    img.show()
+    #img.show()
+
+    result = pytesseract.image_to_string(img, config=tessdata_dir_config)
+    return result
+
+def ocr_img1(image):
+    # win环境
+    # tesseract 路径
+    pytesseract.pytesseract.tesseract_cmd = 'D:\\Tesseract-OCR\\tesseract'
+    # 语言包目录和参数
+    tessdata_dir_config = '--tessdata-dir "D:\\Tesseract-OCR\\tessdata" --psm 6'
 
     result = pytesseract.image_to_string(img, config=tessdata_dir_config)
     return result
@@ -65,8 +75,8 @@ def updatefig(s):
     im.set_array(Image.open('captcha.jpg'))
     return im
 if __name__ == '__main__':
-    img = Image.open("captcha.jpg")
-    print("code = ",ocr_img(img))
+    img = Image.open("pet-chain/split/vHXm_H.jpg")
+    print("code = ",ocr_img1(img))
 
     # ani = animation.FuncAnimation(fig, updatefig, interval=5, blit=True)
     # plt.show()

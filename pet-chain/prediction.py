@@ -14,7 +14,7 @@ def crack_captcha(captcha_image, captcha_label):
 	saver = tf.train.Saver()
 	with tf.Session() as sess:
 
-		saver.restore(sess, tf.train.latest_checkpoint('pet-chain/model/'))
+		saver.restore(sess, tf.train.latest_checkpoint('/pet-chain/model'))
 		for i in range(len(captcha_label)):
 			img = captcha_image[i].flatten()
 			label = captcha_label[i]

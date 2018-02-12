@@ -12,12 +12,13 @@ class Train():
 		#gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction = 1)
 		#self.config.gpu_options.allow_growth = True
 		# 数据集路径
-		self.data_path = 'pet-chain/back/'
+		self.data_path = 'pet-chain/split/'
 		# 写到指定的磁盘路径中 
 		self.log_dir = 'pet-chain/log'
 		# 数据集图片大小
-		self.width = 23
-		self.heigth = 63
+		# 将验证码图片按照 14-24 24-34 37-47 47-57 切分为四个字符图片
+		self.width = 10
+		self.heigth = 23
 		# 最大迭代次数
 		self.max_steps = 1000000
 		# 读取数据集
@@ -33,7 +34,7 @@ class Train():
 		# 字符字典大小:0-9 a-z A-Z _(验证码如果小于4，用_补齐) 一共63个字符
 		self.char_set_len = 63
 		# 验证码最长的长度为4
-		self.max_captcha = 4
+		self.max_captcha = 1
 		# 输入数据X占位符
 		self.X = tf.placeholder(tf.float32, [None, self.heigth*self.width])
 		# 输入数据Y占位符
@@ -90,7 +91,7 @@ class Train():
 		imgs = []
 		# 删除不合法的数据
 		for i in range(len(imags)):
-			if len(imags[i]) == 8:
+			if len(imags[i]) == 10:
 				imgs.append(imags[i])
 		# 数据集总共个数
 		imgs_num = len(imgs)
@@ -99,11 +100,13 @@ class Train():
 		# 测试集
 		test_imgs = imgs[:test_num]
 		# 根据文件名获取测试集标签
-		test_labels = list(map(lambda x: x.split('.')[0], test_imgs))
+		test_labels = list(map(lambda x: x.split('.')[0].split('_')[1], test_imgs))
+		print('len test_labels = ' + str(len(test_labels)))
 		# 训练集
 		train_imgs = imgs[test_num:]
 		# 根据文件名获取训练集标签
-		train_labels = list(map(lambda x: x.split('.')[0], train_imgs))
+		train_labels = list(map(lambda x: x.split('.')[0].split('_')[1], train_imgs))
+		print('len train_labels = ' + str(len(train_labels)))
 		return test_imgs, test_labels, train_imgs, train_labels
  
 	def get_next_batch(self, train_flag=True, batch_size=100):
@@ -170,11 +173,11 @@ class Train():
 		Returns:
 			vector:向量
 		"""
-		if len(text) > 4:
+		if len(text) > 1:
 			print("text = " + text)
 			raise ValueError('验证码最长4个字符')
  
-		vector = np.zeros(4 * self.char_set_len)
+		vector = np.zeros(1 * self.char_set_len)
 		def char2pos(c):
 			if c =='_':
 				k = 62
@@ -228,9 +231,9 @@ class Train():
 			out:CNN输出
 		"""
 		# 卷积的input: 一个Tensor。数据维度是四维[batch, in_height, in_width, in_channels]
-		# 具体含义是[batch大小, 图像高度, 图像宽度, 图像通道数]
-		# 因为是灰度图，所以是单通道的[?, 250, 90, 1]
-		x = tf.reshape(self.X, shape=[-1, self.heigth, self.width, 1])
+		# 具体含义是[batch大小, 图像宽度, 图像高度, 图像通道数]
+		# 因为是灰度图，所以是单通道的[?, 10, 23, 1]
+		x = tf.reshape(self.X, shape=[-1, self.width, self.heigth, 1])
 		# 卷积的filter:一个Tensor。数据维度是四维[filter_height, filter_width, in_channels, out_channels]
 		# 具体含义是[卷积核的高度, 卷积核的宽度, 图像通道数, 卷积核个数]
 		w_c1 = tf.Variable(w_alpha*tf.random_normal([3, 3, 1, 32]))
@@ -272,21 +275,13 @@ class Train():
 		b_c2 = tf.Variable(b_alpha*tf.random_normal([64]))
 		# [?, 125, 45, 64]
 		conv2 = tf.nn.relu(tf.nn.bias_add(tf.nn.conv2d(conv1, w_c2, strides=[1, 1, 1, 1], padding='SAME'), b_c2))
-		# [?, 63, 23, 64]
 		conv2 = tf.nn.max_pool(conv2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 		conv2 = tf.nn.dropout(conv2, self.keep_prob)
-		w_c3 = tf.Variable(w_alpha*tf.random_normal([3, 3, 64, 64]))
-		b_c3 = tf.Variable(b_alpha*tf.random_normal([64]))
-		# [?, 63, 23, 64]
-		conv3 = tf.nn.relu(tf.nn.bias_add(tf.nn.conv2d(conv2, w_c3, strides=[1, 1, 1, 1], padding='SAME'), b_c3))
-		# [?, 23, 12, 64]
-		conv3 = tf.nn.max_pool(conv3, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
-		conv3 = tf.nn.dropout(conv3, self.keep_prob)
 		# [6144, 1024]
-		w_d = tf.Variable(w_alpha*tf.random_normal([8*3*64, 1024]))
+		w_d = tf.Variable(w_alpha*tf.random_normal([6*3*64, 1024]))
 		b_d = tf.Variable(b_alpha*tf.random_normal([1024]))
 		# [?, 12*23*64]
-		dense = tf.reshape(conv3, [-1, w_d.get_shape().as_list()[0]])
+		dense = tf.reshape(conv2, [-1, w_d.get_shape().as_list()[0]])
 		# [?, 1024]
 		dense = tf.nn.relu(tf.add(tf.matmul(dense, w_d), b_d))
 		dense = tf.nn.dropout(dense, self.keep_prob)
@@ -312,7 +307,7 @@ class Train():
 		tf.summary.scalar('loss', loss)
 		
 		# 使用AdamOptimizer优化器训练模型，最小化交叉熵损失
-		optimizer = tf.train.AdamOptimizer(learning_rate=0.0005).minimize(loss)
+		optimizer = tf.train.AdamOptimizer(learning_rate=0.0001).minimize(loss)
  
 		# 计算准确率
 		y = tf.reshape(output, [-1, self.max_captcha, self.char_set_len])
@@ -327,42 +322,33 @@ class Train():
 			# 写到指定的磁盘路径中
 			train_writer = tf.summary.FileWriter(self.log_dir + '/train', sess.graph)
 			test_writer = tf.summary.FileWriter(self.log_dir + '/test')
-			if len(os.listdir('pet-chain/model/')) > 0:
-				saver.restore(sess, tf.train.latest_checkpoint('pet-chain/model/'))
 			sess.run(tf.global_variables_initializer())
 
  
 			# 遍历self.max_steps次
 			for i in range(self.max_steps):
 				# 迭代500次，打乱一下数据集
-				# if i % 499 == 0:
-				# 	saver.save(sess, "pet-chain/model/captcha.model", global_step=i)
-				# 	self.test_imgs, self.test_labels, self.train_imgs, self.train_labels = self.get_imgs()
+				if i % 499 == 0:
+					# saver.save(sess, "pet-chain/model/captcha.model", global_step=i)
+					self.test_imgs, self.test_labels, self.train_imgs, self.train_labels = self.get_imgs()
 				# 每10次，使用测试集，测试一下准确率
 				if i % 10 == 0:
-					batch_x_test, batch_y_test = self.get_next_batch(False, 100)
+					batch_x_test, batch_y_test = self.get_next_batch(False, 200)
 					summary, acc = sess.run([merged, accuracy], feed_dict={self.X: batch_x_test, self.Y: batch_y_test, self.keep_prob: 1})
 					print('迭代第%d次 accuracy:%f' % (i+1, acc))
 					test_writer.add_summary(summary, i)
  
 					# 如果准确率大于95%，则保存模型并退出。
-					if acc > 0.6:
-						train_writer.close()
-						test_writer.close()
-						saver.save(sess, "pet-chain/model/captcha.model", global_step=i)
+					if acc > 0.95:
 						break
 				# 一直训练
 				else:
-					batch_x, batch_y = self.get_next_batch(True, 100)
+					batch_x, batch_y = self.get_next_batch(True, 200)
 					loss_value, _ = sess.run([loss, optimizer], feed_dict={self.X: batch_x, self.Y: batch_y, self.keep_prob: 1})
 					print('迭代第%d次 loss:%f' % (i+1, loss_value))
 					curve = sess.run(merged, feed_dict={self.X: batch_x_test, self.Y: batch_y_test, self.keep_prob: 1})
 					train_writer.add_summary(curve, i)
-					# if loss_value < 0.078:
-					# 	train_writer.close()
-					# 	test_writer.close()
-					# 	saver.save(sess, "pet-chain/crack_capcha.model", global_step=i)
-					# 	break
+					
  
 			train_writer.close()
 			test_writer.close()
