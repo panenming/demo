@@ -98,23 +98,24 @@ class PetChain():
 
             if float(pet_amount) <= setting:
                 if self.genCaptcha(): # 生成验证码
-                    self.captcha = ''
+                    captcha = ''
                     img = Image.open("pet-chain/captcha.jpg")
                     get_pic.imgConvert(img)
                     get_pic.splitimageOrder(self.fixlen,'pet-chain/divide/')
                     if self.isAuto:
                         for i in range(4):
-                            self.captcha += autoCheckCaptcha.autoCheck("pet-chain/divide/" + str(i) + ".jpg",self.dz,self.sess,self.output)
+                            captcha += autoCheckCaptcha.autoCheck("pet-chain/divide/" + str(i) + ".jpg",self.dz,self.sess,self.output)
                     else:
-                        self.captcha = input('请输入验证码：')
-                    print("验证码猜测：",self.captcha)
-
+                        captcha = input('请输入验证码：')
+                    print("验证码猜测：",captcha)
+                    
                     pet_id = pet.get(u"petId")
+                    print("petId = " + pet_id)
                     pet_validcode = pet.get(u"validCode")
                     data = {"petId": pet_id,
                             "amount": "{}".format(pet_amount),
                             "seed": self.seed,
-                            "captcha": self.captcha,
+                            "captcha": captcha,
                             "validCode": pet_validcode,
                             "requestId": int(round(time.time() * 1000)),
                             "appId": 1,
