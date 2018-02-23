@@ -66,17 +66,20 @@ class Pic():
             "requestId": int(round(time.time() * 1000)),
             "tpl": "",
         }
-        page = requests.post("https://pet-chain.baidu.com/data/captcha/gen", headers=self.headers, data=json.dumps(data), timeout=2)
-        jPage = page.json()
-        if jPage.get(u"errorMsg") == "success":
-            self.seed = jPage.get(u"data").get(u"seed")
-            img = jPage.get(u"data").get(u"img")
-            with open('pet-chain/captcha.jpg', 'wb') as f:
-                f.write(base64.b64decode(img))
-            return True
-        else:
-            print('获取验证码失败！')
-            return False
+        try:
+            page = requests.post("https://pet-chain.baidu.com/data/captcha/gen", headers=self.headers, data=json.dumps(data), timeout=2)
+            jPage = page.json()
+            if jPage.get(u"errorMsg") == "success":
+                seed = jPage.get(u"data").get(u"seed")
+                img = jPage.get(u"data").get(u"img")
+                with open('pet-chain/captcha/' + seed + '.jpg', 'wb') as f:
+                    f.write(base64.b64decode(img))
+                return seed
+            else:
+                print('获取验证码失败！')
+                return -1
+        except:
+            return -1
 
 #二值判断,如果确认是噪声,用改点的上面一个点的灰度进行替换  
 #该函数也可以改成RGB判断的,具体看需求如何  
@@ -168,7 +171,7 @@ def imgConvert(image):
 
     img=depoint(image)
     img=img.resize((63,23),Image.ANTIALIAS)
-    img.save('pet-chain/captcha.jpg')
+    # img.save('pet-chain/captcha.jpg')
     return img
 
 # 将back中的图片按照比例每个切成四个 14-24 24-34 37-47 47-57 切分为四个字符图片
@@ -181,9 +184,7 @@ def splitimage(name, fixlen,srcpath,dstpath):
         box = (fixlen[i][0], 0, fixlen[i][1], 23)
         img.crop(box).save(dstpath + dstname)
 
-def splitimageOrder(fixlen,dstpath):
-    print('开始处理图片切割, 请稍候...')
-    img = Image.open('pet-chain/captcha.jpg')
+def splitimageOrder(img,fixlen,dstpath):
     for i in range(4):
         dstname = str(i) + '.jpg'
         box = (fixlen[i][0], 0, fixlen[i][1], 23)
@@ -197,31 +198,63 @@ def splitimageOrder(fixlen,dstpath):
 if __name__ == "__main__":
     # 将back中的图片按照比例每个切成四个 14-24 24-34 37-47 47-57 切分为四个字符图片
     fixlen = [[14,24],[24,34],[34,44],[47,57]]
+    dz = train2.Train()
+    output = dz.crack_captcha_cnn()
+    saver = tf.train.Saver()
+    sess =  tf.Session()
+    saver.restore(sess,tf.train.latest_checkpoint('pet-chain/model'))
+    i = 0
+    pic = Pic()
+    while i < 3000:
+        time.sleep(1)
+        seed = pic.genCaptcha()
+        if seed == -1 :
+            continue
+        else:
+            try:
+                path = 'pet-chain/captcha/' + seed + '.jpg'
+
+                img = Image.open(path)
+                imgConvert(img)
+                splitimageOrder(imgConvert(img),fixlen,'pet-chain/divide/')
+                # img.show()
+                txt = ''
+                for i in range(4):
+                    txt += autoCheckCaptcha.autoCheck("pet-chain/divide/" + str(i) + ".jpg",dz,sess,output)
+                if txt != '':
+                    print("开始重命名" + path  + "为pet-chain/captcha/" + txt + ".jpg")
+                    os.rename(path,'pet-chain/captcha/' + txt + '.jpg')
+            except Exception as e:
+                print(e)
+                continue
+
+        
+    
     # for file in os.listdir('pet-chain/back'):
     #     if len(file) == 8:
     #         splitimage(file,fixlen,'pet-chain/back/','pet-chain/split/')
     #     else:
     #         print("file 不合法：" + file)
 
-    dz = train2.Train()
-    output = dz.crack_captcha_cnn()
-    saver = tf.train.Saver()
-    sess =  tf.Session()
-    saver.restore(sess,tf.train.latest_checkpoint('pet-chain/model'))
-    pic = Pic()
-    pic.genCaptcha()
+    # dz = train2.Train()
+    # output = dz.crack_captcha_cnn()
+    # saver = tf.train.Saver()
+    # sess =  tf.Session()
+    # saver.restore(sess,tf.train.latest_checkpoint('pet-chain/model'))
+    # pic = Pic()
+    # pic.genCaptcha()
 
-    start = time.time()
-    img = Image.open("pet-chain/captcha.jpg")
-    imgConvert(img)
-    splitimageOrder(fixlen,'pet-chain/divide/')
-    # img.show()
-    txt = ''
-    for i in range(4):
-        txt += autoCheckCaptcha.autoCheck("pet-chain/divide/" + str(i) + ".jpg",dz,sess,output)
-    end = time.time()
-    print('code = ',txt)
-    print("cost : ", end -start)
+    # start = time.time()
+    # img = Image.open("pet-chain/captcha.jpg")
+    # imgConvert(img)
+    # splitimageOrder(fixlen,'pet-chain/divide/')
+    # # img.show()
+    # txt = ''
+    # for i in range(4):
+    #     txt += autoCheckCaptcha.autoCheck("pet-chain/divide/" + str(i) + ".jpg",dz,sess,output)
+    # end = time.time()
+    # print('code = ',txt)
+    # print("cost : ", end -start)
     #autoCheckCaptcha.autoCheck('pet-chain/back/2SF4.jpg',dz)
 
     # for file in os.listdir('pet-chain/captcha'):    
