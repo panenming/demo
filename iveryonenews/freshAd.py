@@ -10,10 +10,15 @@ def freshAd():
     res = requests.get(headers=config.HEADERS,url=url)
     if res.json().get(u"errno") == 0:
         print("刷新成功！")
+        return True
     else:
         print(res.text)
+        return False
 
 if __name__ == '__main__':
     while True:
-        freshAd()
-        time.sleep(30 * (random() + 1))
+        if freshAd():
+            time.sleep(2)
+        else:
+            time.sleep(30 * (random() + 1))
+        
