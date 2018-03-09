@@ -3,6 +3,8 @@ import sinaNews
 import requests
 import os
 import sqlite3
+import time
+from random import random
 
 db_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data.db')
 token = "T5AA11FCEC25AE"# 你的token
@@ -74,6 +76,8 @@ if __name__ == '__main__':
             else:
                 if uploadArticle(title,content):
                     save_in_sqlite(con,title,url)
+                    # 上传成功之后，隔一段时间再上传
+                    time.sleep(40 * (random() + 1))
         else:
             continue
     close_sqlite_db(con)

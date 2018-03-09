@@ -25,7 +25,8 @@ def read_item_url(url):
         p_level_list = div_lelvel_str.find_all('p')
         content = ""
         for item in p_level_list:
-            content = content + item.text.strip()+'\n'
+            if item.text.strip() != '点击进入专题':
+                content = content + '<p>' + item.text+'</p>'
         return title,content
     except BaseException:
         return None,None
@@ -37,7 +38,7 @@ def get_realtime_news():
     valid_timestamp_url_list = []
     failed_url_filename = os.path.join(PATH, 'sina_news_log')
     with codecs.open(failed_url_filename, mode='a', encoding='utf-8')as af:
-        for page_num in range(start_page_num, start_page_num+5):
+        for page_num in range(start_page_num, start_page_num+10):
             url = url_pattern%page_num
             try:
                 res = requests.get(url)
