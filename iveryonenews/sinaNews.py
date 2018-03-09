@@ -35,7 +35,7 @@ def get_realtime_news():
     url_pattern = 'http://roll.news.sina.com.cn/interface/rollnews_ch_out_interface.php?col=89&spec=&type=&ch=01&k=&offset_page=0&offset_num=0&num=80&asc=&page=%s&r=0.30903104213777677'
     start_page_num = 1
     valid_timestamp_url_list = []
-    failed_url_filename = os.path.join(PATH, 'log','sina_news_log')
+    failed_url_filename = os.path.join(PATH, 'sina_news_log')
     with codecs.open(failed_url_filename, mode='a', encoding='utf-8')as af:
         for page_num in range(start_page_num, start_page_num+5):
             url = url_pattern%page_num

@@ -1,9 +1,11 @@
 import sinaNews
 import requests
+import os
+import sqlite3
 
-
-token = "T5AA11FCEC25AE"
-uid = "1714420"
+db_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data.db')
+token = "T5AA11FCEC25AE"# 你的token
+uid = "1714420"#你的uid
 def uploadArticle(title,content):
     params = {
         "token":(None,token),
@@ -24,17 +26,54 @@ def uploadArticle(title,content):
     res = requests.post("https://api.iveryone.wuyan.cn/Draft/Thread/Modify",headers=headers,files=params)
     #print(res.request.body)
     #print(res.request.headers)
-    print(res.content)
+    if res.json().get(u"errno") == 0:
+       print('上传文章成功！')
+       return True
+    else:
+        return False 
 
+def find_in_sqlite(con,title,url):
+    cursor = con.cursor()
+    count = cursor.execute('''SELECT ID FROM ariticlerecord
+       WHERE title='%s' AND url='%s';'''%(title,url))
+    for _ in count:
+        print('title=' + title + 'url=' + url + '在数据库存在，不再上传！')
+        return True
+    return False   
+def save_in_sqlite(con,title,url):
+    cursor = con.cursor()
+    cursor.execute('''INSERT INTO ariticlerecord
+       (title,url) VALUES('%s','%s');'''%(title,url))
+    con.commit()
+def init_sqlite_db():
+    con = sqlite3.connect(db_file)
+    cursor = con.cursor()
+    cursor.execute('''CREATE TABLE IF NOT EXISTS ariticlerecord
+       (ID INTEGER PRIMARY KEY     AUTOINCREMENT,
+       title           TEXT    NOT NULL,
+       url            TEXT     NOT NULL);''')
+    con.commit()
+    return con
+
+def close_sqlite_db(con):
+    if con:
+        con.close()
 if __name__ == '__main__':
+    # 初始化db
+    con = init_sqlite_db()
     # 下载新浪的数据局
     valid_timestamp_url_list = sinaNews.get_realtime_news()
     for url in valid_timestamp_url_list:
         title,content = sinaNews.read_item_url(url)
         if content:
             # 上传文章到 iveryone
-            uploadArticle(title,content)
+            if find_in_sqlite(con,title,url):
+                continue
+            else:
+                if uploadArticle(title,content):
+                    save_in_sqlite(con,title,url)
         else:
             continue
+    close_sqlite_db(con)
     
     ###uploadArticle(1,2)
