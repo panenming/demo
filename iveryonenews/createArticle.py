@@ -1,3 +1,4 @@
+#coding:utf-8
 import sinaNews
 import requests
 import os
