@@ -26,12 +26,15 @@ def uploadArticle(title,content):
     res = requests.post("https://api.iveryone.wuyan.cn/Draft/Thread/Modify",headers=config.HEADERS,files=params)
     #print(res.request.body)
     #print(res.request.headers)
-    if res.json().get(u"errno") == 0:
-       print('上传文章成功！')
-       return True
+    if res.ok:
+        if res.json().get(u"errno") == 0:
+            print('上传文章成功！')
+            return True
+        else:
+            print(res)
+            return False 
     else:
-        print(res)
-        return False 
+        return False
 
 def find_in_sqlite(con,title,url):
     cursor = con.cursor()
