@@ -8,11 +8,14 @@ import time
 def freshAd():
     url = "https://userapi.iveryone.wuyan.cn/Api/Shadow/Query?uid=%s&token=%s&lang=zh-CN&limit=3"%(config.UID,config.TOKEN)
     res = requests.get(headers=config.HEADERS,url=url)
-    if res.json().get(u"errno") == 0:
-        print("刷新成功！")
-        return True
+    if res.ok():
+        if res.json().get(u"errno") == 0:
+            print("刷新成功！")
+            return True
+        else:
+            print(res.text)
+            return False
     else:
-        print(res.text)
         return False
 
 if __name__ == '__main__':
