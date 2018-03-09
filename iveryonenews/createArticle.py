@@ -30,6 +30,7 @@ def uploadArticle(title,content):
        print('上传文章成功！')
        return True
     else:
+        print(res)
         return False 
 
 def find_in_sqlite(con,title,url):
