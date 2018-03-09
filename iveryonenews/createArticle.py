@@ -62,7 +62,8 @@ def init_sqlite_db():
 def close_sqlite_db(con):
     if con:
         con.close()
-if __name__ == '__main__':
+
+def upload_real_time_news():
     # 初始化db
     con = init_sqlite_db()
     # 下载新浪的数据局
@@ -81,5 +82,33 @@ if __name__ == '__main__':
         else:
             continue
     close_sqlite_db(con)
-    
+
+def upload_keyword_news():
+    # 初始化db
+    con = init_sqlite_db()
+    # 开始分页加载新浪搜索到的新闻
+    start = 1
+    valid_timestamp_url_list = []
+    for page in range(start,start + config.PAGECOUNT):
+        for url in sinaNews.get_keyword_news(config.KEYWORD,page):
+            valid_timestamp_url_list.append(url)
+    for url in valid_timestamp_url_list:
+        title,content = sinaNews.read_item_url(url)
+        if content:
+            # 上传文章到 iveryone
+            if find_in_sqlite(con,title,url):
+                continue
+            else:
+                if uploadArticle(title,content):
+                    save_in_sqlite(con,title,url)
+                    # 上传成功之后，隔一段时间再上传
+                    time.sleep(40 * (random() + 1))
+        else:
+            continue
+    close_sqlite_db(con)
+if __name__ == '__main__':
+    # 上传新浪的实时新闻
+    #upload_real_time_news()
+    # 上传新浪的关键字新闻
+    upload_keyword_news()
     ###uploadArticle(1,2)

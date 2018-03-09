@@ -8,6 +8,7 @@ import datetime
 from bs4 import BeautifulSoup
 import chardet
 import config
+import json
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 TIMESTAMP = time.strftime('%Y%m%d')
@@ -20,9 +21,16 @@ def read_item_url(url):
         print('timed out in item_url;%s\n'%url)
     try:
         soup = BeautifulSoup(html, 'html5lib')
-        title = soup.find('meta', property="og:title").get("content")
+        title = soup.find('meta', property="og:title")
+        if title:
+            title = title.get("content")
+        else:
+            title = soup.find('h1',id="artibodyTitle").text
         
         div_lelvel_str = soup.find('div', id='article')
+        if div_lelvel_str == None:
+            div_lelvel_str = soup.find('div', id='artibody')
+            
         p_level_list = div_lelvel_str.find_all('p')
         content = ""
         for item in p_level_list:
@@ -68,13 +76,48 @@ def get_realtime_news():
 def datetime_toString(dt):
     return dt.strftime("%Y-%m-%d")
 
+def get_keyword_news(key,page):
+    url = "http://search.sina.com.cn/?q=%s&range=all&c=news&sort=time&page=%s"%(key,page)
+    res = requests.get(headers=config.HEADERS,url=url)
+    urls = []
+    try:
+        if res.ok:
+           html = res.text.encode('utf-8')
+           soup = BeautifulSoup(html, 'html5lib')
+           result = soup.find('div',id='result')
+           if result != None:
+               h2 = result.find_all('h2')
+               if h2 != None:
+                   for h in h2:
+                       try:
+                           href = h.find('a').get('href')
+                           if href != None:
+                                urls.append(href)
+                       except Exception:
+                           print('找不到href')   
+    except Exception as e:
+        print("解析失败:",e)
+    return urls
+
+def from_jsonp(jsonp_str):
+    jsonp_str = jsonp_str.strip()
+    if not jsonp_str.startswith(config.JSONP_START) or \
+            not jsonp_str.endswith(config.JSONP_END):
+        return None
+    return json.loads(jsonp_str[len(config.JSONP_START):-len(config.JSONP_END)])
+
 if __name__ == '__main__':
-    valid_timestamp_url_list = get_realtime_news()
-    for url in valid_timestamp_url_list:
-        title,content = read_item_url(url)
-        if content:
-            print(title,content)
-        else:
-            continue
+    start = 1
+    for page in range(start,start + config.PAGECOUNT):
+        print("第%s页"%(page))
+        print(get_keyword_news(config.KEYWORD,page))
+    #print(read_item_url("http://city.sina.com.cn/city/t/2018-03-01/110288539.html"))
+    #valid_timestamp_url_list = get_realtime_news()
+    #for url in valid_timestamp_url_list:
+    #    title,content = read_item_url(url)
+    #    if content:
+    #        print(title,content)
+    #    else:
+    #        continue
         
     # print(valid_timestamp_url_list)

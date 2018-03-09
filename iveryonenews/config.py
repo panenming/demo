@@ -5,3 +5,7 @@ HEADERS = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:58.0) Gecko/20100101 Firefox/58.0"
 }#请求头部信息
 PAGECOUNT=2 #拉取多少页数据
+JSONP_START= r'callback('
+JSONP_END = r');'
+JSONP="callback"
+KEYWORD="区块链"#需要在新浪新闻上搜索的词汇
