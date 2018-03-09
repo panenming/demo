@@ -5,14 +5,13 @@ import os
 import sqlite3
 import time
 from random import random
+import config
 
 db_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data.db')
-token = "T5AA11FCEC25AE"# 你的token
-uid = "1714420"#你的uid
 def uploadArticle(title,content):
     params = {
-        "token":(None,token),
-        "uid":(None,uid),
+        "token":(None,config.TOKEN),
+        "uid":(None,config.UID),
         "locale":(None,"undefined"),
         "title":(None,title),
         "content":(None,content),
@@ -23,10 +22,8 @@ def uploadArticle(title,content):
         "shareAble":(None,"0"),
         "status":(None,"2")
     }
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:58.0) Gecko/20100101 Firefox/58.0"
-    }
-    res = requests.post("https://api.iveryone.wuyan.cn/Draft/Thread/Modify",headers=headers,files=params)
+    
+    res = requests.post("https://api.iveryone.wuyan.cn/Draft/Thread/Modify",headers=config.HEADERS,files=params)
     #print(res.request.body)
     #print(res.request.headers)
     if res.json().get(u"errno") == 0:

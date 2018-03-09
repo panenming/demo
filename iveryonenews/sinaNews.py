@@ -7,6 +7,7 @@ import requests
 import datetime
 from bs4 import BeautifulSoup
 import chardet
+import config
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 TIMESTAMP = time.strftime('%Y%m%d')
@@ -38,7 +39,7 @@ def get_realtime_news():
     valid_timestamp_url_list = []
     failed_url_filename = os.path.join(PATH, 'sina_news_log')
     with codecs.open(failed_url_filename, mode='a', encoding='utf-8')as af:
-        for page_num in range(start_page_num, start_page_num+10):
+        for page_num in range(start_page_num, start_page_num+config.PAGECOUNT):
             url = url_pattern%page_num
             try:
                 res = requests.get(url)
