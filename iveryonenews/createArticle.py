@@ -107,8 +107,15 @@ def upload_keyword_news():
             continue
     close_sqlite_db(con)
 if __name__ == '__main__':
-    # 上传新浪的实时新闻
-    #upload_real_time_news()
-    # 上传新浪的关键字新闻
-    upload_keyword_news()
-    ###uploadArticle(1,2)
+    instr = input("输入你要执行的模式（1：上传新浪的实时新闻;2：上传按关键字搜索到的新浪新闻）")
+    if instr == '1':
+        # 上传新浪的实时新闻
+        upload_real_time_news()
+    elif instr == '2':
+        keyword = input("输入你要查询的关键字：")
+        config.KEYWORD = keyword
+        # 上传新浪的关键字新闻
+        upload_keyword_news()
+        ###uploadArticle(1,2)
+    else:
+        print("不支持该种类型！")
