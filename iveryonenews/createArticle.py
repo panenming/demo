@@ -18,7 +18,7 @@ def uploadArticle(title,content):
         "author":(None,"wo"),
         "summary":(None,"我"),
         "cover":(None,"http://iveryone.wuyan.cn/cc3c717db71cebcd4ab8ea87a0154a9e.jpeg"),#写死的封面图片
-        "price":(None,"2"),
+        "price":(None,"1"),
         "shareAble":(None,"0"),
         "status":(None,"2")
     }
