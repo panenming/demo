@@ -21,7 +21,7 @@ def freshAd():
 if __name__ == '__main__':
     while True:
         if freshAd():
-            time.sleep(2)
+            time.sleep(5 * (random() + 1))
         else:
             time.sleep(30 * (random() + 1))
         
