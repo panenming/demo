@@ -6,6 +6,8 @@ import sqlite3
 import time
 from random import random
 import config
+import toutiaoNews
+from selenium import webdriver
 
 db_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data.db')
 def uploadArticle(title,content):
@@ -106,8 +108,33 @@ def upload_keyword_news():
         else:
             continue
     close_sqlite_db(con)
+
+def upload_toutiao_keyword_news(driver):
+    # 初始化db
+    con = init_sqlite_db()
+    # 开始分页加载新浪搜索到的新闻
+    start = 1
+    valid_timestamp_url_list = []
+    for page in range(start,start + config.PAGECOUNT):
+        for url in toutiaoNews.get_keyword_news(config.KEYWORD,page,10):
+            valid_timestamp_url_list.append(url)
+    for url in valid_timestamp_url_list:
+        title,content = toutiaoNews.read_item_url(url,driver)
+        if content:
+            # 上传文章到 iveryone
+            if find_in_sqlite(con,title,url):
+                continue
+            else:
+                if uploadArticle(title,content):
+                    save_in_sqlite(con,title,url)
+                    # 上传成功之后，隔一段时间再上传
+                    time.sleep(40 * (random() + 1))
+        else:
+            continue
+    close_sqlite_db(con)
 if __name__ == '__main__':
-    instr = input("输入你要执行的模式（1：上传新浪的实时新闻;2：上传按关键字搜索到的新浪新闻）")
+    instr = input("输入你要执行的模式（1：上传新浪的实时新闻;2：上传按关键字搜索到的新浪新闻;3: 头条搜索新闻）")
+    #instr = '3'
     if instr == '1':
         # 上传新浪的实时新闻
         upload_real_time_news()
@@ -117,5 +144,12 @@ if __name__ == '__main__':
         # 上传新浪的关键字新闻
         upload_keyword_news()
         ###uploadArticle(1,2)
+    elif instr == '3':
+        # 上传头条新闻
+        keyword = input("输入你要查询的关键字：")
+        config.KEYWORD = keyword
+        driver = webdriver.Chrome()
+        upload_toutiao_keyword_news(driver)
+        driver.close()
     else:
         print("不支持该种类型！")
