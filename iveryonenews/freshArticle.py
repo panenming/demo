@@ -5,37 +5,48 @@ import config
 import time
 
 # 刷新广告，赚取积分
-def freshAd():
+def freshAd(lastid,page):
     url = "https://api.iveryone.wuyan.cn/Api/Feed/GetFeed"
-    params = {
-        "token":(None,config.TOKEN),
-        "uid":(None,config.UID),
-        "lang":(None,"zh-CN")
-    }
-    
-    try:
-        res = requests.post(url,headers=config.HEADERS,files=params)
-        if res.ok:
-            if res.json().get(u"errno") == 0:
-                if len(res.json().get(u"data")) > 0:
-                    print("刷新文章成功！")
+    num = 0
+    while True:  
+        params = fixParam(lastid)
+        try:
+            res = requests.post(url,headers=config.HEADERS,files=params)
+            if res.ok:
+                if res.json().get(u"errno") == 0:
+                    data = res.json().get(u"data")
+                    feeds = data['feeds']
+                    feedsCount = len(feeds)
+                    if feedsCount > 0:
+                        lastid = feeds[feedsCount-1]["feedid"]
+                        print("刷新文章成功！")
+                    else:
+                        print("没有更多广告！")
                 else:
-                    print("没有更多广告！")
-                return True
-            else:
-                print(res.text)
-                return False
-        else:
-            return False
-    except Exception:
-        print("刷新失败！")
-        return False
-    
+                    print(res.text)
+        except Exception:
+            print("刷新失败！")
+        time.sleep(3 * (random() + 1))
+        num += 1
+        if num == page:
+            lastid = None
+
+def fixParam(lastid):
+    if lastid == None:
+        params = {
+            "token":(None,config.TOKEN),
+            "uid":(None,config.UID),
+            "lang":(None,"zh-CN")
+        }
+    else:
+        params = {
+            "token":(None,config.TOKEN),
+            "uid":(None,config.UID),
+            "lang":(None,"zh-CN"),
+            "lastid":(None,lastid)
+        }
+    return params
 
 if __name__ == '__main__':
-    while True:
-        if freshAd():
-            time.sleep(3 * (random() + 1))
-        else:
-            time.sleep(5 * (random() + 1))
+    freshAd(None,2)
         
