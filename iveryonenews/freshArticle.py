@@ -22,9 +22,14 @@ def freshAd(lastid,page):
                         print("刷新文章成功！")
                     else:
                         print("没有更多广告！")
+                        lastid = None
                 else:
+                    lastid = None
                     print(res.text)
+            else:
+                lastid = None
         except Exception:
+            lastid = None
             print("刷新失败！")
         time.sleep(3 * (random() + 1))
         num += 1
