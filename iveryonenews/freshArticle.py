@@ -53,5 +53,5 @@ def fixParam(lastid):
     return params
 
 if __name__ == '__main__':
-    freshAd(None,2)
+    freshAd(None,3)
         
