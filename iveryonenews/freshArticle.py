@@ -31,7 +31,7 @@ def freshAd(lastid,page):
         except Exception:
             lastid = None
             print("刷新失败！")
-        time.sleep(3 * (random() + 1))
+        time.sleep(10 * (random() + 1))
         num += 1
         if num == page:
             lastid = None
